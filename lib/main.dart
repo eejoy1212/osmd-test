@@ -359,15 +359,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:piano/piano.dart'; // 🎹 피아노 패키지 추가
 
 void main() {
   runApp(const OSMDScreen());
 }
 
 class OSMDScreen extends StatefulWidget {
-  const OSMDScreen({
-    super.key,
-  });
+  const OSMDScreen({super.key});
 
   @override
   State<OSMDScreen> createState() => _OSMDScreenState();
@@ -379,6 +378,8 @@ class _OSMDScreenState extends State<OSMDScreen> {
 
   late String fileString;
   bool isLoading = true;
+  InAppWebViewController? webViewController;
+  String? selectedNoteId; // ✅ 현재 선택된 음표 ID 저장
 
   @override
   void initState() {
@@ -387,16 +388,13 @@ class _OSMDScreenState extends State<OSMDScreen> {
   }
 
   startLocalhost() async {
-    // 파일 로드
     fileString = await rootBundle.loadString('assets/music/demo.musicxml');
-    // 로컬호스트 시작
     await localhostServer.start();
     setState(() {});
   }
 
   @override
   void dispose() {
-    // 위젯이 dispose되기 전에 localhost를 종료해야 한다.
     localhostServer.close();
     super.dispose();
   }
@@ -405,29 +403,60 @@ class _OSMDScreenState extends State<OSMDScreen> {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(title: const Text("webview로 OSMD 사용하기 예제")),
+        appBar: AppBar(title: const Text("WebView + Piano Keyboard")),
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (localhostServer.isRunning())
               Expanded(
-                child: SizedBox.expand(
-                  child: InAppWebView(
-                    initialUrlRequest: URLRequest(
-                      url: WebUri('http://localhost:8080'),
-                    ),
-                    onWebViewCreated: (controller) async {
-                      controller.addJavaScriptHandler(
-                          handlerName: 'sendFileToOSMD',
-                          callback: (args) async {
-                            return {
-                              'bytes': fileString,
-                            };
-                          });
-                    },
+                flex: 2, // 웹뷰가 화면의 2/3 차지
+                child: InAppWebView(
+                  initialUrlRequest: URLRequest(
+                    url: WebUri('http://localhost:8080'),
                   ),
+                  onWebViewCreated: (controller) {
+                    webViewController = controller;
+                    // ✅ 기존 sendFileToOSMD 핸들러 (악보 로드)
+                    controller.addJavaScriptHandler(
+                      handlerName: 'sendFileToOSMD',
+                      callback: (args) async {
+                        return {'bytes': fileString};
+                      },
+                    );
+
+                    controller.addJavaScriptHandler(
+                      handlerName: 'selectNote',
+                      callback: (args) {
+                        selectedNoteId = args[0]; // ✅ JavaScript에서 전달된 음표 ID 저장
+                        print("🎯 선택된 음표 ID: $selectedNoteId");
+                      },
+                    );
+                  },
                 ),
-              )
+              ),
+            const SizedBox(height: 10), // 여백 추가
+            Expanded(
+              flex: 1, // 건반이 화면의 1/3 차지
+              child: InteractivePiano(
+                  noteRange: NoteRange.forClefs([Clef.Treble, Clef.Bass]),
+                  keyWidth: 40, // 건반 크기 조절
+                  naturalColor: Colors.white,
+                  accidentalColor: Colors.black,
+                  onNotePositionTapped: (note) {
+                    // NotePosition.fromName(note.name);
+                    print("🎹 건반 눌림: ${note.name}${note.octave}");
+
+                    // if (selectedNoteId != null) {
+                    // ✅ JavaScript로 선택한 음표 ID와 새로운 건반 음 전달
+                    webViewController?.evaluateJavascript(
+                      source:
+                          'changeSelectedNote("${note.name.toString().substring(0, 1)}", "${note.name.toString().substring(1, 2)}");',
+                    );
+                    selectedNoteId = null; // ✅ 변경 후 초기화
+                  }
+                  // },
+                  ),
+            ),
           ],
         ),
       ),
