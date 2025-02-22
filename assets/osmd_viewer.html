@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSMD Viewer</title>
+    <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.7.0/build/opensheetmusicdisplay.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        #music-container {
+            width: 100%;
+            height: 600px;
+            overflow: auto;
+            border: 1px solid #ccc;
+            margin-top: 20px;
+        }
+
+        .note-highlight {
+            fill: none;
+            stroke: blue;
+            stroke-width: 2;
+        }
+
+        .note-highlight.clicked {
+            stroke: red;
+        }
+
+        #snackbar {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            border-radius: 5px;
+            opacity: 0;
+            transition: opacity 0.5s, bottom 0.5s;
+        }
+
+        #snackbar.show {
+            visibility: visible;
+            opacity: 1;
+            bottom: 50px;
+        }
+    </style>
+</head>
+<body>
+    <h2>MusicXML Viewer</h2>
+    <button onclick="pickFile()">파일 선택</button>
+    <div id="music-container"></div>
+    <div id="snackbar"></div>
+
+    <script>
+        let osmd;
+        let parsedNotes = [];
+
+        function pickFile() {
+            if (window.Flutter) {
+                window.Flutter.postMessage("pickFile");
+            } else {
+                alert("Flutter 환경이 아닙니다.");
+            }
+        }
+
+        function loadMusicXML(base64String) {
+    try {
+        let xmlText = atob(base64String.split(",")[1]); // Base64 디코딩
+        console.log("📌 디코딩된 XML 데이터:", xmlText);
+
+        parsedNotes = parseMusicXML(xmlText); // ✅ XML에서 음표 정보 파싱
+        renderMusicXML(xmlText); // ✅ OSMD로 악보 렌더링 후, 음표 매핑
+
+    } catch (error) {
+        alert("Base64 데이터 디코딩 실패: " + error);
+        console.error("Error decoding Base64:", error);
+    }
+}
+
+
+        function renderMusicXML(xmlText) {
+            if (!osmd) {
+                osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("music-container", {
+                    autoResize: true,
+                    backend: "svg",
+                    drawTitle: true,
+                    followCursor: true,
+                    drawPartNames: true,
+                    drawMeasureNumbers: true,
+                    drawingParameters: "all"
+                });
+            }
+
+            osmd.load(xmlText).then(() => {
+                osmd.render();
+                console.log("✅ OSMD 렌더링 완료");
+                setTimeout(() => {
+                    highlightAllNotes();
+                    addNoteClickEvent();
+                }, 100);
+            }).catch(error => {
+                alert("악보 로드 실패: " + error);
+                console.error("Error loading MusicXML:", error);
+            });
+        }
+
+        function parseMusicXML(xmlString) {
+            let parser = new DOMParser();
+            let xmlDoc = parser.parseFromString(xmlString, "text/xml");
+
+            let parsed = [];
+            let parts = xmlDoc.getElementsByTagName("part");
+
+            for (let part of parts) {
+                let measures = part.getElementsByTagName("measure");
+
+                for (let measure of measures) {
+                    let measureNumber = measure.getAttribute("number") || "Unknown";
+                    let clef = part.getAttribute("id")??"unKnowned"//measure.getElementsByTagName("clef")[0]?.getElementsByTagName("sign")[0]?.textContent || "Unknown";
+
+                    let notes = measure.getElementsByTagName("note");
+                    for (let note of notes) {
+                        let isRest = note.getElementsByTagName("rest").length > 0;
+                        if (isRest) {
+                            parsed.push({ measure: measureNumber, note: "Rest", clef });
+                            continue;
+                        }
+
+                        let step = note.getElementsByTagName("step")[0]?.textContent || "Unknown";
+                        let octave = parseInt(note.getElementsByTagName("octave")[0]?.textContent || "0");
+                        let alterNode = note.getElementsByTagName("alter")[0];
+                        let alter = alterNode ? (alterNode.textContent === "1" ? "#" : alterNode.textContent === "-1" ? "♭" : "") : "";
+                        console.log("🎶 파싱된 음표 목록:", measureNumber,"//",`${step}${alter}${octave}`,"//",clef);
+                        parsed.push({ measure: measureNumber, note: `${step}${alter}${octave}`, clef });
+                    }
+                }
+            }
+
+            console.log("🎶 파싱된 음표 목록:", parsed);
+            return parsed;
+        }
+
+        function addNoteClickEvent() {
+            const svgContainer = document.querySelector("#music-container svg");
+            if (!svgContainer) {
+                console.error("SVG 컨테이너를 찾을 수 없습니다.");
+                return;
+            }
+
+            svgContainer.addEventListener("click", function (event) {
+                let target = event.target.closest("g.vf-stavenote");
+
+                if (target) {
+                    highlightNote(target);
+
+                    let allNotes = Array.from(svgContainer.querySelectorAll("g.vf-stavenote"));
+                    let filteredNotes = allNotes.filter(note => !note.querySelector("g.vf-rest"));
+                    let noteIndex = filteredNotes.indexOf(target);
+
+                    if (noteIndex === -1 || !parsedNotes[noteIndex]) {
+                        console.warn("🚨 음표가 존재하지 않음!");
+                        return;
+                    }
+
+                    let { measure, note, clef } = parsedNotes[noteIndex];
+                    console.log(`✅🎯 Clicked Note - Measure: ${measure}, Clef: ${clef}, Note: ${note}`);
+                    
+                    showSnackbar(`Measure: ${measure} / Clef: ${clef} / Note: ${note}`);
+
+                    if (window.Flutter) {
+                        window.Flutter.postMessage(`noteClicked: Measure ${measure}, Clef ${clef}, Note ${note}`);
+                    }
+                }
+            });
+        }
+
+        function highlightAllNotes() {
+            const notes = document.querySelectorAll("g.vf-stavenote");
+            if (!notes) return;
+
+            notes.forEach(note => {
+                let bbox = note.getBBox();
+                let svg = note.closest("svg");
+
+                let existingRect = svg.querySelector(`[data-note-x="${bbox.x}"][data-note-y="${bbox.y}"]`);
+                if (existingRect) return;
+
+                let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                rect.setAttribute("x", bbox.x - 2);
+                rect.setAttribute("y", bbox.y - 2);
+                rect.setAttribute("width", bbox.width + 4);
+                rect.setAttribute("height", bbox.height + 4);
+                rect.setAttribute("class", "note-highlight");
+                rect.setAttribute("data-note-x", bbox.x);
+                rect.setAttribute("data-note-y", bbox.y);
+
+                svg.appendChild(rect);
+            });
+        }
+
+        function highlightNote(noteGroup) {
+            document.querySelectorAll(".note-highlight").forEach(el => el.classList.remove("clicked"));
+            let bbox = noteGroup.getBBox();
+            let svg = noteGroup.closest("svg");
+
+            let rect = Array.from(svg.querySelectorAll(".note-highlight")).find(r =>
+                parseFloat(r.getAttribute("x")) === bbox.x - 2 &&
+                parseFloat(r.getAttribute("y")) === bbox.y - 2
+            );
+
+            if (rect) {
+                rect.classList.add("clicked");
+            }
+        }
+
+        function showSnackbar(message) {
+            let snackbar = document.getElementById("snackbar");
+            snackbar.textContent = message;
+            snackbar.classList.add("show");
+
+            setTimeout(() => {
+                snackbar.classList.remove("show");
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
