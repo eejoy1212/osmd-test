@@ -490,6 +490,22 @@ class _OSMDScreenState extends State<OSMDScreen> {
                           return "data:image/svg+xml;base64,$base64Image"; // ✅ Base64 인코딩된 이미지 경로 반환
                         },
                       );
+                      controller.addJavaScriptHandler(
+                        handlerName: 'getLocalGlissandoImagePath',
+                        callback: (args) async {
+                          String base64Image =
+                              await ImageLoader.getBase64GhostNote();
+                          return "data:image/svg+xml;base64,$base64Image"; // ✅ Base64 인코딩된 이미지 경로 반환
+                        },
+                      );
+                      controller.addJavaScriptHandler(
+                        handlerName: 'getLocalTremoloImagePath',
+                        callback: (args) async {
+                          String base64Image =
+                              await ImageLoader.getBase64GhostNote();
+                          return "data:image/svg+xml;base64,$base64Image"; // ✅ Base64 인코딩된 이미지 반환
+                        },
+                      );
                     },
                   ),
                 ),
@@ -536,36 +552,36 @@ class _OSMDScreenState extends State<OSMDScreen> {
               ),
 
               // ✅마디 삭제 & 생성
-              // Row(
-              //   mainAxisAlignment: MainAxisAlignment.center,
-              //   children: [
-              // ElevatedButton(
-              //   style:
-              //       ElevatedButton.styleFrom(backgroundColor: Colors.black),
-              //   onPressed: () async {
-              //     // ✅ async 추가!
-              //     await webViewController?.evaluateJavascript(
-              //         // ✅ await 추가!
-              //         source: 'removeLastMeasure();');
-              //   },
-              //   child: const Text("마디 삭제",
-              //       style: TextStyle(color: Colors.white)),
-              // ),
-              //     const SizedBox(width: 30),
-              //     ElevatedButton(
-              //       style: ElevatedButton.styleFrom(
-              //           backgroundColor: Colors.orange),
-              //       onPressed: () async {
-              //         // ✅ async 추가!
-              //         await webViewController?.evaluateJavascript(
-              //             // ✅ await 추가!
-              //             source: 'addMeasure();');
-              //       },
-              //       child: const Text("마디 추가",
-              //           style: TextStyle(color: Colors.white)),
-              //     ),
-              //   ],
-              // ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    style:
+                        ElevatedButton.styleFrom(backgroundColor: Colors.black),
+                    onPressed: () async {
+                      // ✅ async 추가!
+                      await webViewController?.evaluateJavascript(
+                          // ✅ await 추가!
+                          source: 'removeLastMeasure();');
+                    },
+                    child: const Text("마디 삭제",
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                  const SizedBox(width: 30),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange),
+                    onPressed: () async {
+                      // ✅ async 추가!
+                      await webViewController?.evaluateJavascript(
+                          // ✅ await 추가!
+                          source: 'addMeasure();');
+                    },
+                    child: const Text("마디 추가",
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              ),
               // ✅점 4분음표 1개 & 2개 추가
               // Row(
               //   mainAxisAlignment: MainAxisAlignment.center,
@@ -666,8 +682,912 @@ class _OSMDScreenState extends State<OSMDScreen> {
               //     ),
               //   ],
               // ),
-
-              Row(
+//✅고스트 노트 ,데드노트 ,아르페지오
+              // Row(
+              //   children: [
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertGhostNoteImage();');
+              //       },
+              //       child: const Text("고스트 노트",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertDeadNote();');
+              //       },
+              //       child: const Text("데드 노트",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertArpeggioNote();');
+              //       },
+              //       child: const Text("아르페지오",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertArpeggioNote();');
+              //       },
+              //       child: const Text("아르페지오",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //   ],
+              // ),
+              //✅글리산도,트레몰로,트레몰로 빔
+              // Row(
+              //   children: [
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'addTwoNotesWithGlissando();');
+              //       },
+              //       child: const Text("글리산도",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertTremoloNote();');
+              //       },
+              //       child: const Text("트레몰로",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertTremoloBeam();');
+              //       },
+              //       child: const Text("트레몰로 빔",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //   ],
+              // ),
+              // ✅트릴,  턴, 모르덴트
+              // Row(
+              //   children: [
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertTrillNote();');
+              //       },
+              //       child:
+              //           const Text("트릴", style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertTurnNote();');
+              //       },
+              //       child:
+              //           const Text("턴", style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertMordentNote();');
+              //       },
+              //       child: const Text("모르덴트",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //   ],
+              // ),
+              //✅크레센도,디크레센도,피아노ppp
+              // Row(
+              //   children: [
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertCrescendo();');
+              //       },
+              //       child: const Text("크레센도",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertDecrescendo();');
+              //       },
+              //       child: const Text("디크레센도",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertDynamicPPP();');
+              //       },
+              //       child: const Text("피아노 ppp",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //   ],
+              // ),
+              //✅피아니시모pp, 피아니시시모p, 메조피아노mp
+              // Row(
+              //   children: [
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertDynamicPP();');
+              //       },
+              //       child: const Text("피아니시모pp",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertDynamicP();');
+              //       },
+              //       child: const Text("피아니시시모p",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 20,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertDynamicMP();');
+              //       },
+              //       child: const Text("메조피아노mp",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //   ],
+              // ),
+              //✅메조피아노mf~페달 해제
+              // Wrap(
+              //   children: [
+              // SizedBox(
+              //   width: 30,
+              // ),
+              // ElevatedButton(
+              //   style:
+              //       ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //   onPressed: () async {
+              //     // ✅ async 추가!
+              //     await webViewController?.evaluateJavascript(
+              //         // ✅ await 추가!
+              //         source: 'insertDynamicMF();');
+              //   },
+              //   child: const Text("메조피아노mf",
+              //       style: TextStyle(color: Colors.white)),
+              // ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertDynamicForte();');
+              //       },
+              //       child: const Text("포르테f",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertDynamicFortissimo();');
+              //       },
+              //       child: const Text("포르티시모ff",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertDynamicFortississimo();');
+              //       },
+              //       child: const Text("포르테시시모fff",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertDynamicSforzando();');
+              //       },
+              //       child: const Text("스포르찬도sfz",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertDynamicRinforzando();');
+              //       },
+              //       child: const Text("린포르찬도rfz",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertDynamicFortePiano();');
+              //       },
+              //       child: const Text("포르테피아노 (fp)",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertDynamicPianoForte();');
+              //       },
+              //       child: const Text("피아노포르테 (pf)",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertStyledPedalText();');
+              //       },
+              //       child:
+              //           const Text("페달", style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertPedalReleaseText();');
+              //       },
+              //       child: const Text("페달 해제",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //   ],
+              // ),
+              //✅Bar Line~왼쪽 도돌이표
+              // Wrap(
+              //   children: [
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertBarLine();');
+              //       },
+              //       child: const Text("Bar Line",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertDoubleBarLine();');
+              //       },
+              //       child: const Text("Double Bar Line",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertRepeatBarLine("forward");');
+              //       },
+              //       child: const Text("반복 시작 마디줄",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertRepeatBarLine("backward");');
+              //       },
+              //       child: const Text("반복 끝 마디줄",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertRepeatBarLineForward();');
+              //       },
+              //       child: const Text("오른쪽 도돌이표",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertRepeatBarLineBackward();');
+              //       },
+              //       child: const Text("왼쪽 도돌이표",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //   ],
+              // ),
+              //✅Coda~D.C.다 카포
+              // Wrap(
+              //   children: [
+              // SizedBox(
+              //   width: 30,
+              // ),
+              // ElevatedButton(
+              //   style:
+              //       ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //   onPressed: () async {
+              //     // ✅ async 추가!
+              //     await webViewController?.evaluateJavascript(
+              //         // ✅ await 추가!
+              //         source: 'insertCodaSymbol();');
+              //   },
+              //   child: const Text("Coda",
+              //       style: TextStyle(color: Colors.white)),
+              // ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertSegnoSymbol();');
+              //       },
+              //       child:
+              //           const Text("세뇨", style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertFineSymbol();');
+              //       },
+              //       child: const Text("Fine.",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertToCodaSymbol();');
+              //       },
+              //       child: const Text("To Coda",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertDalSegnoWithText();');
+              //       },
+              //       child: const Text("D.S.달세뇨",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertDaCapo();');
+              //       },
+              //       child: const Text("D.C.다 카포",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //   ],
+              // ),
+              //✅엔딩~꾸밈음
+              // Wrap(
+              //   children: [
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertEnding();');
+              //       },
+              //       child:
+              //           const Text("엔딩", style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertRitardando();');
+              //       },
+              //       child: const Text("리타르단도",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertAccelerando();');
+              //       },
+              //       child: const Text("아첼레란도",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertMarcatoWithImage();');
+              //       },
+              //       child: const Text("마르카토",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertAccent();');
+              //       },
+              //       child: const Text("악센트",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertBreathMark();');
+              //       },
+              //       child:
+              //           const Text("숨표", style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertNoteWithCaesura();');
+              //       },
+              //       child: const Text("카에수라",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertGgumimNote();');
+              //       },
+              //       child: const Text("꾸밈음",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'createAcciaccaturaScore();');
+              //       },
+              //       child: const Text("아치아카투라음표만 있는 악보 생성",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'createGracenoteScore();');
+              //       },
+              //       child: const Text("꾸밈음음표만 있는 악보 생성",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              // SizedBox(
+              //   width: 30,
+              // ),
+              // ElevatedButton(
+              //   style:
+              //       ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //   onPressed: () async {
+              //     // ✅ async 추가!
+              //     await webViewController?.evaluateJavascript(
+              //         // ✅ await 추가!
+              //         source: 'createGracenoteScore();');
+              //   },
+              //   child: const Text("고스트노트만 있는 악보 생성",
+              //       style: TextStyle(color: Colors.white)),
+              // ),
+              //   ],
+              // ),
+              //✅고스트 노트 ,데드노트 ,아르페지오
+              // Wrap(
+              //   children: [
+              // SizedBox(
+              //   width: 30,
+              // ),
+              // ElevatedButton(
+              //   style:
+              //       ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //   onPressed: () async {
+              //     // ✅ async 추가!
+              //     await webViewController?.evaluateJavascript(
+              //         // ✅ await 추가!
+              //         source: 'createGhostNoteScore();');
+              //   },
+              //   child: const Text("고스트노트만 있는 악보 생성",
+              //       style: TextStyle(color: Colors.white)),
+              // ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertGhostNoteTest();');
+              //       },
+              //       child: const Text("고스트노트",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertSlurNotes();');
+              //       },
+              //       child: const Text("이음줄",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertTripletWithNumber();');
+              //       },
+              //       child: const Text("잇단음표",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertTie();');
+              //       },
+              //       child: const Text("붙임줄",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'insertBeam();');
+              //       },
+              //       child: const Text("빔 연결",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'removeBeam();');
+              //       },
+              //       child: const Text("빔 연결 해제",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'transposeScore(2);');
+              //       },
+              //       child: const Text("조 옮김",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //   ],
+              // ),
+              Wrap(
                 children: [
                   SizedBox(
                     width: 30,
@@ -679,9 +1599,54 @@ class _OSMDScreenState extends State<OSMDScreen> {
                       // ✅ async 추가!
                       await webViewController?.evaluateJavascript(
                           // ✅ await 추가!
-                          source: 'insertGhostNoteImage();');
+                          source: 'insertOttava("8va");');
                     },
-                    child: const Text("고스트 노트",
+                    child: const Text("8va",
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                  SizedBox(
+                    width: 30,
+                  ),
+                  ElevatedButton(
+                    style:
+                        ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                    onPressed: () async {
+                      // ✅ async 추가!
+                      await webViewController?.evaluateJavascript(
+                          // ✅ await 추가!
+                          source: 'insertOttava("8vb");');
+                    },
+                    child: const Text("8vb",
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                  SizedBox(
+                    width: 30,
+                  ),
+                  ElevatedButton(
+                    style:
+                        ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                    onPressed: () async {
+                      // ✅ async 추가!
+                      await webViewController?.evaluateJavascript(
+                          // ✅ await 추가!
+                          source: 'insertQuindicesima();');
+                    },
+                    child: const Text("15ma",
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                  SizedBox(
+                    width: 30,
+                  ),
+                  ElevatedButton(
+                    style:
+                        ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                    onPressed: () async {
+                      // ✅ async 추가!
+                      await webViewController?.evaluateJavascript(
+                          // ✅ await 추가!
+                          source: 'insertQuindicesimaBassa();');
+                    },
+                    child: const Text("15mb",
                         style: TextStyle(color: Colors.white)),
                   ),
                 ],
