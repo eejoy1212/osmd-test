@@ -359,7 +359,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:piano/piano.dart'; // 🎹 피아노 패키지 추가
+import 'package:piano/piano.dart';
+import 'package:sheet_music_edit_testapp/img_loader.dart';
 
 void main() {
   runApp(const OSMDScreen());
@@ -377,14 +378,17 @@ class _OSMDScreenState extends State<OSMDScreen> {
       InAppLocalhostServer(documentRoot: 'assets/web');
 
   late String fileString;
-  bool isLoading = true;
   InAppWebViewController? webViewController;
-  String? selectedNoteId; // ✅ 현재 선택된 음표 ID 저장
+  final FocusNode _focusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
     startLocalhost();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.requestFocus();
+      SystemChannels.textInput.invokeMethod('TextInput.show');
+    });
   }
 
   startLocalhost() async {
@@ -396,68 +400,315 @@ class _OSMDScreenState extends State<OSMDScreen> {
   @override
   void dispose() {
     localhostServer.close();
+    _focusNode.dispose();
     super.dispose();
   }
 
+  // ✅ 음표 목록
+  final List<Map<String, String>> notes = [
+    {"name": "온음표", "value": "whole"},
+    {"name": "2분음표", "value": "half"},
+    {"name": "4분음표", "value": "quarter"},
+    {"name": "8분음표", "value": "eighth"},
+    {"name": "16분음표", "value": "sixteenth"},
+    {"name": "32분음표", "value": "thirty-second"},
+    {"name": "64분음표", "value": "sixty-fourth"},
+  ];
+
+  // ✅ 음표 타입별 duration 매핑
+  final Map<String, int> durationMap = {
+    "whole": 4,
+    "half": 2,
+    "quarter": 1,
+    // "eighth": 0.5.toInt(),
+    // "sixteenth": 0.25.toInt(),
+    // "thirty-second": 0.125.toInt(),
+    // "sixty-fourth": 0.0625.toInt(),
+    "eighth": 0.5.toInt(),
+    "sixteenth": 1.toInt(),
+    "thirty-second": 8.toInt(),
+    "sixty-fourth": 4.toInt(),
+  };
+// ✅ 추가할 기호 목록
+  final List<Map<String, dynamic>> accidentals = [
+    {"name": "없음", "value": null},
+    {"name": "점음표", "value": "dot"},
+    {"name": "샵(#)", "value": 1},
+    {"name": "더블샵(𝄪)", "value": 2},
+    {"name": "플랫(b)", "value": -1},
+    {"name": "더블플랫(𝄫)", "value": -2},
+    {"name": "내추럴(♮)", "value": 0},
+  ];
+// ✅ 기호 목록
+  final List<Map<String, String>> articulations = [
+    {"name": "없음", "value": ""},
+    {"name": "스타카토", "value": "staccato"},
+    {"name": "스타카티시모", "value": "staccatissimo"},
+    {"name": "테누토", "value": "tenuto"},
+    {"name": "페르마타", "value": "fermata"},
+    {"name": "마르카토", "value": "marcato"},
+    {"name": "악센트", "value": "accent"},
+    {"name": "숨표", "value": "breath-mark"},
+    {"name": "카에수라", "value": "caesura"},
+    {"name": "아치아카투라", "value": "appoggiatura"},
+    {"name": "꾸밈음", "value": "grace-note"},
+  ];
+
+  String? selectedArticulation = ""; // ✅ 기본값: 없음
+
+  dynamic selectedAccidental = null; // 기본값: 없음
+  String? selectedNote = "whole"; // ✅ 기본값: 온음표 선택됨
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(title: const Text("WebView + Piano Keyboard")),
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (localhostServer.isRunning())
-              Expanded(
-                flex: 2, // 웹뷰가 화면의 2/3 차지
-                child: InAppWebView(
-                  initialUrlRequest: URLRequest(
-                    url: WebUri('http://localhost:8080'),
+      home: SafeArea(
+        child: Scaffold(
+          // appBar: AppBar(title: const Text("WebView + Piano Keyboard")),
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (localhostServer.isRunning())
+                Expanded(
+                  flex: 2,
+                  child: InAppWebView(
+                    initialUrlRequest: URLRequest(
+                      url: WebUri('http://localhost:8080'),
+                    ),
+                    onWebViewCreated: (controller) {
+                      webViewController = controller;
+                      controller.addJavaScriptHandler(
+                        handlerName: 'sendFileToOSMD',
+                        callback: (args) async {
+                          return {'bytes': fileString};
+                        },
+                      );
+                      controller.addJavaScriptHandler(
+                        handlerName: 'getLocalImagePath',
+                        callback: (args) async {
+                          String base64Image =
+                              await ImageLoader.getBase64GhostNote();
+                          return "data:image/svg+xml;base64,$base64Image"; // ✅ Base64 인코딩된 이미지 경로 반환
+                        },
+                      );
+                    },
                   ),
-                  onWebViewCreated: (controller) {
-                    webViewController = controller;
-                    // ✅ 기존 sendFileToOSMD 핸들러 (악보 로드)
-                    controller.addJavaScriptHandler(
-                      handlerName: 'sendFileToOSMD',
-                      callback: (args) async {
-                        return {'bytes': fileString};
-                      },
-                    );
+                ),
+              const SizedBox(height: 10),
+              // ✅커서 움직이는 것 & 빈 악보 생성
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    style:
+                        ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                    onPressed: () {
+                      webViewController?.evaluateJavascript(
+                          source: 'moveCursor("left");');
+                    },
+                    child:
+                        const Text("왼쪽", style: TextStyle(color: Colors.white)),
+                  ),
+                  const SizedBox(width: 30),
+                  ElevatedButton(
+                    style:
+                        ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                    onPressed: () {
+                      webViewController?.evaluateJavascript(
+                          source: 'moveCursor("right");');
+                    },
+                    child: const Text("오른쪽",
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                  const SizedBox(width: 30),
+                  ElevatedButton(
+                    style:
+                        ElevatedButton.styleFrom(backgroundColor: Colors.cyan),
+                    onPressed: () async {
+                      // ✅ async 추가!
+                      await webViewController?.evaluateJavascript(
+                          // ✅ await 추가!
+                          source: 'createEmptyScore();');
+                    },
+                    child: const Text("빈 악보 생성",
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              ),
 
-                    controller.addJavaScriptHandler(
-                      handlerName: 'selectNote',
-                      callback: (args) {
-                        selectedNoteId = args[0]; // ✅ JavaScript에서 전달된 음표 ID 저장
-                        print("🎯 선택된 음표 ID: $selectedNoteId");
-                      },
+              // ✅마디 삭제 & 생성
+              // Row(
+              //   mainAxisAlignment: MainAxisAlignment.center,
+              //   children: [
+              // ElevatedButton(
+              //   style:
+              //       ElevatedButton.styleFrom(backgroundColor: Colors.black),
+              //   onPressed: () async {
+              //     // ✅ async 추가!
+              //     await webViewController?.evaluateJavascript(
+              //         // ✅ await 추가!
+              //         source: 'removeLastMeasure();');
+              //   },
+              //   child: const Text("마디 삭제",
+              //       style: TextStyle(color: Colors.white)),
+              // ),
+              //     const SizedBox(width: 30),
+              //     ElevatedButton(
+              //       style: ElevatedButton.styleFrom(
+              //           backgroundColor: Colors.orange),
+              //       onPressed: () async {
+              //         // ✅ async 추가!
+              //         await webViewController?.evaluateJavascript(
+              //             // ✅ await 추가!
+              //             source: 'addMeasure();');
+              //       },
+              //       child: const Text("마디 추가",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //   ],
+              // ),
+              // ✅점 4분음표 1개 & 2개 추가
+              // Row(
+              //   mainAxisAlignment: MainAxisAlignment.center,
+              //   children: [
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () {
+              //         webViewController?.evaluateJavascript(
+              //             source: 'addDottedQuarterNote();');
+              //       },
+              //       child: const Text("점 4분음표(1) 추가",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //     const SizedBox(width: 30),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () {
+              //         webViewController?.evaluateJavascript(
+              //             source: 'addDoubleDottedQuarterNote();');
+              //       },
+              //       child: const Text("점 4분음표(2) 추가",
+              //           style: TextStyle(color: Colors.white)),
+              //     ),
+              //   ],
+              // ),
+              // ✅온음표~내추럴 추가
+              // Row(children: [
+              //   DropdownButton<String>(
+              //     hint: const Text("음표 선택"),
+              //     value: selectedNote,
+              //     onChanged: (String? newValue) {
+              //       setState(() {
+              //         selectedNote = newValue;
+              //       });
+              //     },
+              //     items: notes.map<DropdownMenuItem<String>>((note) {
+              //       return DropdownMenuItem<String>(
+              //         value: note["value"],
+              //         child: Text(note["name"]!), // ✅ 음표 이름 표시
+              //       );
+              //     }).toList(),
+              //   ),
+              //   // UI 추가
+              //   DropdownButton<dynamic>(
+              //     hint: const Text("기호 선택"),
+              //     value: selectedAccidental,
+              //     onChanged: (dynamic newValue) {
+              //       setState(() {
+              //         selectedAccidental = newValue;
+              //       });
+              //     },
+              //     items: accidentals.map<DropdownMenuItem<dynamic>>((acc) {
+              //       return DropdownMenuItem<dynamic>(
+              //         value: acc["value"],
+              //         child: Text(acc["name"]!),
+              //       );
+              //     }).toList(),
+              //   ),
+              // ]),
+              // ✅스타카토~꾸밈음
+              // Row(
+              //   children: [
+              //     // 🎶 드롭다운 UI
+              //     DropdownButton<String>(
+              //       hint: const Text("기호 선택"),
+              //       value: selectedArticulation,
+              //       onChanged: (String? newValue) {
+              //         setState(() {
+              //           selectedArticulation = newValue;
+              //         });
+              //       },
+              //       items: articulations
+              //           .map<DropdownMenuItem<String>>((articulation) {
+              //         return DropdownMenuItem<String>(
+              //           value: articulation["value"],
+              //           child: Text(articulation["name"]!),
+              //         );
+              //       }).toList(),
+              //     ),
+              //     SizedBox(
+              //       width: 30,
+              //     ),
+              //     ElevatedButton(
+              //       style:
+              //           ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              //       onPressed: () async {
+              //         if (selectedArticulation != null) {
+              //           await webViewController?.evaluateJavascript(
+              //             source:
+              //                 'insertNoteWithArticulation("C", 4, "$selectedArticulation");',
+              //           );
+              //         }
+              //       },
+              //       child:
+              //           const Text("적용", style: TextStyle(color: Colors.white)),
+              //     ),
+              //   ],
+              // ),
+
+              Row(
+                children: [
+                  SizedBox(
+                    width: 30,
+                  ),
+                  ElevatedButton(
+                    style:
+                        ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                    onPressed: () async {
+                      // ✅ async 추가!
+                      await webViewController?.evaluateJavascript(
+                          // ✅ await 추가!
+                          source: 'insertGhostNoteImage();');
+                    },
+                    child: const Text("고스트 노트",
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              ),
+              Expanded(
+                flex: 1,
+                child: InteractivePiano(
+                  noteRange: NoteRange.forClefs([Clef.Treble, Clef.Bass]),
+                  keyWidth: 40,
+                  naturalColor: Colors.white,
+                  accidentalColor: Colors.black,
+                  onNotePositionTapped: (note) {
+                    // ✅ 드롭다운에서 선택한 음표 반영
+                    final noteType = selectedNote ?? "whole";
+                    final duration = durationMap[noteType] ?? 4; // 기본값: 온음표 (4)
+                    final accidentalValue =
+                        selectedAccidental ?? "null"; // 조표 값
+                    webViewController?.evaluateJavascript(
+                      source:
+                          // 'insertNoteAtCursor("${note.name.substring(0, 1)}", ${note.octave});',
+                          'insertNoteAtCursor("${note.name.substring(0, 1)}", ${note.octave}, "$noteType", $duration, $accidentalValue);',
                     );
                   },
                 ),
               ),
-            const SizedBox(height: 10), // 여백 추가
-            Expanded(
-              flex: 1, // 건반이 화면의 1/3 차지
-              child: InteractivePiano(
-                  noteRange: NoteRange.forClefs([Clef.Treble, Clef.Bass]),
-                  keyWidth: 40, // 건반 크기 조절
-                  naturalColor: Colors.white,
-                  accidentalColor: Colors.black,
-                  onNotePositionTapped: (note) {
-                    // NotePosition.fromName(note.name);
-                    print("🎹 건반 눌림: ${note.name}${note.octave}");
-
-                    // if (selectedNoteId != null) {
-                    // ✅ JavaScript로 선택한 음표 ID와 새로운 건반 음 전달
-                    webViewController?.evaluateJavascript(
-                      source:
-                          'changeSelectedNote("${note.name.toString().substring(0, 1)}", "${note.name.toString().substring(1, 2)}");',
-                    );
-                    selectedNoteId = null; // ✅ 변경 후 초기화
-                  }
-                  // },
-                  ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

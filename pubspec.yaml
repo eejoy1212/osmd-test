@@ -72,6 +72,7 @@ flutter:
     - assets/web/js/opensheetmusicdisplay.min.js
     - assets/web/js/fileSelectAndLoadOSMD.js
     - assets/music/demo.musicxml
+    - assets/images/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
